@@ -152,7 +152,7 @@ CREATE TABLE `product_rating` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `product_id` INT NOT NULL,
   `user_id` INT NOT NULL,
-  `rating` INT UNSIGNED NOT NULL,
+  `rating` INT UNSIGNED NOT NULL CHECK (`rating` >= 1 AND `rating` <= 5),
   `review` TEXT,
   PRIMARY KEY (`id`)
 );
@@ -192,7 +192,7 @@ CREATE TABLE `order_item` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `order_id` INT NOT NULL,
   `sellers_product_id` INT NOT NULL,
-  `quantity` INT UNSIGNED NOT NULL,
+  `quantity` INT UNSIGNED NOT NULL CHECK (`quantity` > 0),
   `price_paid` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`id`)
 );
@@ -213,4 +213,3 @@ CREATE TABLE `audit` (
 
 ALTER TABLE `audit`
 ADD FOREIGN KEY (`user_id`) REFERENCES `user`(`id`);
-
