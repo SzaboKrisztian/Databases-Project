@@ -10,6 +10,8 @@ CREATE TABLE `address` (
   `door` VARCHAR(8),
   `zip_code` VARCHAR(4) NOT NULL,
   `city` VARCHAR(255) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
@@ -18,8 +20,10 @@ CREATE TABLE `personal_data` (
   `first_name` VARCHAR(255) NOT NULL,
   `last_name` VARCHAR(255) NOT NULL,
   `phone_number` VARCHAR(8),
-  `date_of_birth` VARCHAR(27) NOT NULL,
+  `date_of_birth` TIMESTAMP NOT NULL,
   `address_id` INT,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
@@ -35,6 +39,8 @@ CREATE TABLE `user` (
   `verified` TINYINT NOT NULL DEFAULT(0),
   `personal_data_id` INT,
   `deleted` TINYINT NOT NULL DEFAULT(0),
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE (`email`)
 );
@@ -51,6 +57,8 @@ CREATE TABLE `seller` (
   `address_id` INT NOT NULL,
   `owner_id` INT NOT NULL,
   `deleted` TINYINT NOT NULL DEFAULT(0),
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE (`name`),
   UNIQUE (`legal_name`),
@@ -64,6 +72,8 @@ ADD FOREIGN KEY (`owner_id`) REFERENCES `user`(`id`);
 CREATE TABLE `manufacturer` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE (`name`)
 );
@@ -71,6 +81,8 @@ CREATE TABLE `manufacturer` (
 CREATE TABLE `product_description` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `description` LONGTEXT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
@@ -79,6 +91,8 @@ CREATE TABLE `category` (
   `parent_id` INT,
   `name` VARCHAR(255) NOT NULL,
   `deleted` TINYINT DEFAULT(0),
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE(`name`)
 );
@@ -95,6 +109,8 @@ CREATE TABLE `product` (
   `category_id` INT NOT NULL,
   `approved` TINYINT NOT NULL DEFAULT(0),
   `deleted` TINYINT NOT NULL DEFAULT(0),
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE (`code`)
 );
@@ -106,6 +122,8 @@ ADD FOREIGN KEY (`category_id`) REFERENCES `category`(`id`);
 
 CREATE TABLE `product_group` (
   `id` INT NOT NULL AUTO_INCREMENT,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
@@ -113,6 +131,8 @@ CREATE TABLE `products_groups` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `product_id` INT NOT NULL,
   `product_group_id` INT NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
@@ -124,29 +144,36 @@ CREATE TABLE `product_image` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `product_id` INT NOT NULL,
   `url` VARCHAR(2048) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 ALTER TABLE `product_image`
 ADD FOREIGN KEY (`product_id`) REFERENCES `product`(`id`);
 
-CREATE TABLE `product_property` (
+CREATE TABLE `property` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(255) NOT NULL,
-  `value` VARCHAR(255) NOT NULL,
   `type` ENUM('boolean', 'number', 'string') NOT NULL,
+  `unit` VARCHAR(50),
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
 CREATE TABLE `products_properties` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `product_id` INT NOT NULL,
-  `product_property_id` INT NOT NULL,
+  `property_id` INT NOT NULL,
+  `value` VARCHAR(255) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
 ALTER TABLE `products_properties`
 ADD FOREIGN KEY (`product_id`) REFERENCES `product`(`id`),
-ADD FOREIGN KEY (`product_property_id`) REFERENCES `product_property`(`id`);
+ADD FOREIGN KEY (`property_id`) REFERENCES `property`(`id`);
 
 CREATE TABLE `product_rating` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -154,6 +181,8 @@ CREATE TABLE `product_rating` (
   `user_id` INT NOT NULL,
   `rating` INT UNSIGNED NOT NULL CHECK (`rating` >= 1 AND `rating` <= 5),
   `review` TEXT,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
@@ -169,6 +198,8 @@ CREATE TABLE `sellers_products` (
   `sale_price` INT UNSIGNED,
   `stock_qty` INT UNSIGNED NOT NULL,
   `deleted` TINYINT NOT NULL DEFAULT(0),
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
@@ -181,6 +212,8 @@ CREATE TABLE `order` (
   `user_id` INT NOT NULL,
   `seller_id` INT NOT NULL,
   `order_status` ENUM('pending','confirmed','sent','delivered','cancelled') NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
@@ -194,6 +227,8 @@ CREATE TABLE `order_item` (
   `sellers_product_id` INT NOT NULL,
   `quantity` INT UNSIGNED NOT NULL CHECK (`quantity` > 0),
   `price_paid` INT UNSIGNED NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
@@ -207,7 +242,8 @@ CREATE TABLE `audit` (
   `action` VARCHAR(255) NOT NULL,
   `resource_id` INT NOT NULL,
   `user_id` INT NOT NULL,
-  `timestamp` VARCHAR(27) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
