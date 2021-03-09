@@ -42,7 +42,8 @@ CREATE TABLE `user` (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE (`email`)
+  UNIQUE (`email`),
+  INDEX (`email`)
 );
 
 ALTER TABLE `user`
@@ -112,7 +113,8 @@ CREATE TABLE `product` (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE (`code`)
+  UNIQUE (`code`),
+  INDEX (`code`)
 );
 
 ALTER TABLE `product`
@@ -168,7 +170,8 @@ CREATE TABLE `products_properties` (
   `value` VARCHAR(255) NOT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  INDEX (`value`)
 );
 
 ALTER TABLE `products_properties`
@@ -237,20 +240,22 @@ ADD FOREIGN KEY (`order_id`) REFERENCES `order`(`id`),
 ADD FOREIGN KEY (`sellers_product_id`) REFERENCES `sellers_products`(`id`);
 
 
-CREATE TABLE `audit` (
+CREATE TABLE `price_history` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `action` VARCHAR(255) NOT NULL,
-  `resource_id` INT NOT NULL,
-  `user_id` INT NOT NULL,
+  `seller_product_id` INT NOT NULL,
+  `old_price` INT UNSIGNED,
+  `new_price` INT UNSIGNED,
+  `old_sale_price` INT UNSIGNED,
+  `new_sale_price` INT UNSIGNED,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 );
 
-ALTER TABLE `audit`
-ADD FOREIGN KEY (`user_id`) REFERENCES `user`(`id`);
+ALTER TABLE `price_history`
+ADD FOREIGN KEY (`seller_product_id`) REFERENCES `sellers_products`(`id`);
 
--- VIEW ALL USERS
+-- STORED OBJECTS --
+
 DROP VIEW IF EXISTS user_data;
 CREATE VIEW user_data AS
     SELECT 
@@ -274,9 +279,24 @@ CREATE VIEW user_data AS
 	JOIN personal_data ON user.personal_data_id = personal_data.id
 	JOIN address ON personal_data.address_id = address.id
     WHERE user.deleted = 0;
--- SELECT * FROM user_data;
 
--- VIEW A PRODUCT
+
+CREATE VIEW groups_and_products AS
+SELECT id as group_id, GROUP_CONCAT(product_id) as product_ids
+FROM products_groups
+GROUP BY product_group_id;
+
+
+DROP VIEW IF EXISTS seller_product;
+CREATE VIEW seller_product AS
+SELECT 
+	sellers_products.id, sellers_products.original_price, sellers_products.sale_price, sellers_products.stock_qty, seller.name, seller.legal_name, seller.cvr, seller.phone_number, product.name as product_name, product.code as product_code
+FROM sellers_products
+JOIN seller on sellers_products.seller_id = seller.id
+JOIN product on sellers_products.product_id = product.id
+WHERE sellers_products.deleted = 0;
+
+
 DROP PROCEDURE IF EXISTS view_product;
 DELIMITER \\
 CREATE PROCEDURE view_product(
@@ -291,11 +311,9 @@ BEGIN
     JOIN category c on p.category_id = c.id
     WHERE p.id = in_id AND p.deleted = 0 AND p.approved = 1;
 END \\
-
 DELIMITER ;
--- call view_product(1);
 
--- GET NUMBER OF PRODUCTS IN A CATEGORY
+
 DROP FUNCTION IF EXISTS get_product_count_for_category;
 DELIMITER \\
 CREATE FUNCTION get_product_count_for_category(
@@ -308,24 +326,11 @@ BEGIN
 	SELECT COUNT(*) into count_no from product WHERE category_id = in_id;
     RETURN count_no;
 END \\
-
 DELIMITER ;
--- SELECT get_product_count_for_category(1);
 
--- VIEW ALL USERS
-DROP VIEW IF EXISTS seller_product;
-CREATE VIEW seller_product AS
-SELECT 
-	sellers_products.id, sellers_products.original_price, sellers_products.sale_price, sellers_products.stock_qty, seller.name, seller.legal_name, seller.cvr, seller.phone_number, product.name as product_name, product.code as product_code
-FROM sellers_products
-JOIN seller on sellers_products.seller_id = seller.id
-JOIN product on sellers_products.product_id = product.id
-WHERE sellers_products.deleted = 0;
 
--- CREATE NEW USER
 DROP PROCEDURE IF EXISTS create_user;
 DELIMITER //
-
 CREATE PROCEDURE create_user(
 	IN in_email VARCHAR(255), 
 	IN in_password VARCHAR(255), 
@@ -345,9 +350,7 @@ BEGIN
 END //
 DELIMITER ;
 
--- CALL create_user('radu@radu.com', 'dsadsadsadasda', 'radu', 'radu2', '1999-04-03 00:00:00');
 
--- GET PRODUCT IMAGES
 DROP PROCEDURE IF EXISTS get_product_images;
 DELIMITER //
 CREATE PROCEDURE get_product_images(
@@ -360,9 +363,7 @@ BEGIN
 END //
 DELIMITER ;
 
--- CALL get_product_images(1);
 
--- GET PRODUCT PROPERTIES
 DROP PROCEDURE IF EXISTS get_product_properties;
 DELIMITER //
 CREATE PROCEDURE get_product_properties(
@@ -377,4 +378,9 @@ END //
 
 DELIMITER ;
 
--- CALL get_product_properties(1)
+
+CREATE TRIGGER record_price_change
+BEFORE UPDATE ON sellers_products
+FOR EACH ROW
+    INSERT INTO price_history(seller_product_id, old_price, new_price, old_sale_price, new_sale_price)
+    VALUES (OLD.id, OLD.original_price, NEW.original_price, OLD.sale_price, NEW.sale_price);
