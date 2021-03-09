@@ -28,7 +28,7 @@ CREATE TABLE `personal_data` (
 );
 
 ALTER TABLE `personal_data`
-ADD FOREIGN KEY (`address_id`) REFERENCES `address`(`id`);
+ADD FOREIGN KEY (`address_id`) REFERENCES `address`(`id`) ON DELETE SET NULL;
 
 
 CREATE TABLE `user` (
@@ -46,7 +46,7 @@ CREATE TABLE `user` (
 );
 
 ALTER TABLE `user`
-ADD FOREIGN KEY (`personal_data_id`) REFERENCES `personal_data`(`id`);
+ADD FOREIGN KEY (`personal_data_id`) REFERENCES `personal_data`(`id`) ON DELETE SET NULL;
 
 CREATE TABLE `seller` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -105,7 +105,7 @@ CREATE TABLE `product` (
   `name` VARCHAR(1024) NOT NULL,
   `code` VARCHAR(255) NOT NULL,
   `manufacturer_id` INT NOT NULL,
-  `description_id` INT NOT NULL,
+  `description_id` INT,
   `category_id` INT NOT NULL,
   `approved` TINYINT NOT NULL DEFAULT(0),
   `deleted` TINYINT NOT NULL DEFAULT(0),
@@ -117,7 +117,7 @@ CREATE TABLE `product` (
 
 ALTER TABLE `product`
 ADD FOREIGN KEY (`manufacturer_id`) REFERENCES `manufacturer`(`id`),
-ADD FOREIGN KEY (`description_id`) REFERENCES `product_description`(`id`),
+ADD FOREIGN KEY (`description_id`) REFERENCES `product_description`(`id`) ON DELETE SET NULL,
 ADD FOREIGN KEY (`category_id`) REFERENCES `category`(`id`);
 
 CREATE TABLE `product_group` (
@@ -137,8 +137,8 @@ CREATE TABLE `products_groups` (
 );
 
 ALTER TABLE `products_groups`
-ADD FOREIGN KEY (`product_id`) REFERENCES `product`(`id`),
-ADD FOREIGN KEY (`product_group_id`) REFERENCES `product_group`(`id`);
+ADD FOREIGN KEY (`product_id`) REFERENCES `product`(`id`) ON DELETE CASCADE,
+ADD FOREIGN KEY (`product_group_id`) REFERENCES `product_group`(`id`) ON DELETE CASCADE;
 
 CREATE TABLE `product_image` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -149,7 +149,7 @@ CREATE TABLE `product_image` (
   PRIMARY KEY (`id`)
 );
 ALTER TABLE `product_image`
-ADD FOREIGN KEY (`product_id`) REFERENCES `product`(`id`);
+ADD FOREIGN KEY (`product_id`) REFERENCES `product`(`id`) ON DELETE CASCADE;
 
 CREATE TABLE `property` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -172,7 +172,7 @@ CREATE TABLE `products_properties` (
 );
 
 ALTER TABLE `products_properties`
-ADD FOREIGN KEY (`product_id`) REFERENCES `product`(`id`),
+ADD FOREIGN KEY (`product_id`) REFERENCES `product`(`id`) ON DELETE CASCADE,
 ADD FOREIGN KEY (`property_id`) REFERENCES `property`(`id`);
 
 CREATE TABLE `product_rating` (
